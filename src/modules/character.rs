@@ -1,6 +1,15 @@
-use super::{Context, Module, ModuleConfig, Shell};
-use crate::configs::character::CharacterConfig;
+use chrono::{Timelike, Local};
+use super::{Context, Module, Shell};
 use crate::formatter::StringFormatter;
+
+fn symbol_time(c: bool) -> String {
+    let n = Local::now();
+    if c {
+        format!("[{:02}](bg:26):{:02}:{:02}", n.hour(), n.minute(), n.second())
+    } else {
+        format!("{:02}:{:02}:{:02}", n.hour(), n.minute(), n.second())
+    }
+}
 
 /// Creates a module for the prompt character
 ///
@@ -22,12 +31,9 @@ pub fn module<'a>(context: &'a Context) -> Option<Module<'a>> {
     // TODO: extend config to more modes
 
     let mut module = context.new_module("character");
-    let config: CharacterConfig = CharacterConfig::try_load(module.config);
 
     let props = &context.properties;
-    let exit_code = props.status_code.as_deref().unwrap_or("0");
     let keymap = props.keymap.as_str();
-    let exit_success = exit_code == "0";
 
     // Match shell "keymap" names to normalized vi modes
     // NOTE: in vi mode, fish reports normal mode as "default".
@@ -44,21 +50,12 @@ pub fn module<'a>(context: &'a Context) -> Option<Module<'a>> {
         _ => ASSUMED_MODE,
     };
 
-    let symbol = match mode {
-        ShellEditMode::Normal => config.vimcmd_symbol,
-        ShellEditMode::Visual => config.vimcmd_visual_symbol,
-        ShellEditMode::Replace => config.vimcmd_replace_symbol,
-        ShellEditMode::ReplaceOne => config.vimcmd_replace_one_symbol,
-        ShellEditMode::Insert => {
-            if exit_success {
-                config.success_symbol
-            } else {
-                config.error_symbol
-            }
-        }
-    };
+    let symbol = &symbol_time(match mode {
+        ShellEditMode::Normal => true,
+        _ => false,
+    });
 
-    let parsed = StringFormatter::new(config.format).and_then(|formatter| {
+    let parsed = StringFormatter::new("$symbol ").and_then(|formatter| {
         formatter
             .map_meta(|variable, _| match variable {
                 "symbol" => Some(symbol),
