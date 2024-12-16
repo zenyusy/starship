@@ -1,5 +1,4 @@
 use super::{Context, Module, Shell};
-use crate::configs::character::CharacterConfig;
 use crate::formatter::StringFormatter;
 use chrono::{Local, Timelike};
 
