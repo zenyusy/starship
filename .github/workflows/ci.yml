@@ -1,0 +1,22 @@
+name: b
+
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - id: compile
+        uses: rust-build/rust-build.action@v1.4.5
+        with:
+          RUSTTARGET: x86_64-unknown-linux-musl
+          ARCHIVE_TYPES: tar.gz
+          UPLOAD_MODE: none
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bin
+          path: ${{ steps.compile.outputs.BUILT_ARCHIVE }}
+          compression-level: 9
